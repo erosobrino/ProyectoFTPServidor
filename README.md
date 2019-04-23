@@ -17,6 +17,6 @@ Una vez hecho esto, puedes añadir nuevos usuarios as servidor mediante un gesto
 
 ## Avances
 
-12/04/2019 Crear el proyecto
-19/04/2019 Metodos para leer configuracion, conectar bd o crear para tabla de usuarios, comprobacion de usuario valido y carga de ficheros
-23/04/2019 Metodo para lanzar hilos para conexiones, añadir nuevo elemento al fichero de configuracion y correccion en conexion a bd
+12/04/2019 Crear el proyecto.<br>
+19/04/2019 Metodos para leer configuracion, conectar bd o crear para tabla de usuarios, comprobacion de usuario valido y carga de ficheros.<br>
+23/04/2019 Metodo para lanzar hilos para conexiones, añadir nuevo elemento al fichero de configuracion y correccion en conexion a bd.<br>
