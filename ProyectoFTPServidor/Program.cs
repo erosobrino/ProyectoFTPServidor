@@ -3,6 +3,8 @@ using MySql.Data.MySqlClient;
 using System.IO;
 using System.Net;
 using System.Collections.Generic;
+using System.Net.Sockets;
+using System.Threading;
 
 namespace ProyectoFTPServidor
 {
@@ -10,6 +12,7 @@ namespace ProyectoFTPServidor
     {
         IPAddress ip;
         string puertoBD;
+        int puertoServer;
         string usuarioBD;
         string contraseñaBD;
         string nombreBDUsuarios;
@@ -27,7 +30,8 @@ namespace ProyectoFTPServidor
             Console.WriteLine("Usuario: " + p.usuarioBD);
             Console.WriteLine("Contraseña: " + p.contraseñaBD);
             Console.WriteLine("Base de datos: " + p.nombreBDUsuarios);
-            Console.WriteLine("Puerto: " + p.puertoBD);
+            Console.WriteLine("Puerto BD: " + p.puertoBD);
+            Console.WriteLine("Puerto Servidor: " + p.puertoServer);
             Console.WriteLine("Ruta: " + p.ruta + "\n");
 
             if (p.compruebaBD())
@@ -37,9 +41,39 @@ namespace ProyectoFTPServidor
 
             p.cargaFicheros();
 
-            Console.WriteLine(p.usuarioValido("admin", ""));
+            Console.WriteLine(p.usuarioValido("admin", "admin"));
 
             Console.ReadLine();
+        }
+
+        public void iniciaServidorArchivos()
+        {
+            try
+            {
+                IPEndPoint ie = new IPEndPoint(IPAddress.Any, puertoServer);
+                Socket s = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+                s.Bind(ie);
+                s.Listen(10);
+                Console.WriteLine("Escuchando en el puerto " + puertoServer);
+                while (true)
+                {
+                    Socket sCliente = s.Accept();
+                    Thread hilo = new Thread(() => hiloCliente(sCliente));
+                    hilo.IsBackground = true;
+                    hilo.Start(sCliente);
+                }
+            }
+            catch (SocketException)
+            {
+                Console.WriteLine("El puerto esta ocupado");
+            }
+            Console.ReadKey();
+        }
+
+        private void hiloCliente(Socket sCliente)
+        {
+
         }
 
         private void cargaFicheros()
@@ -116,6 +150,20 @@ namespace ProyectoFTPServidor
                                 case "ruta":
                                     ruta = lineaActual.Substring(lineaActual.IndexOf('=') + 1);
                                     break;
+                                case "puertoserver":
+                                    try
+                                    {
+                                        puertoServer = Convert.ToInt32(lineaActual.Substring(lineaActual.IndexOf('=') + 1));
+                                        if (puertoServer < IPEndPoint.MinPort || puertoServer > IPEndPoint.MaxPort)
+                                        {
+                                            throw new Exception();
+                                        }
+                                    }
+                                    catch (Exception)
+                                    {
+                                        Console.WriteLine("El puerto para el servidor debe ser un numero entre "+ IPEndPoint.MinPort+" y "+IPEndPoint.MaxPort);
+                                    }
+                                    break;
                                 default:
                                     break;
                             }
@@ -140,6 +188,7 @@ namespace ProyectoFTPServidor
                         sw.WriteLine("nombreBDUsuarios=UsuariosFTP");
                         sw.WriteLine("puertoBD=3306");
                         sw.WriteLine("ruta=");
+                        sw.WriteLine("puertoServer=31416");
                     }
                     leeConfiguracion();
                 }
@@ -155,7 +204,7 @@ namespace ProyectoFTPServidor
             try
             {
                 //Comprueba que existe la base de datos y sino la crea con el usuario admin por defecto
-                string conexion = "Server=" + ip + ";Database=mysql;User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
+                string conexion = "Server=" + ip + ";port="+puertoBD+";Database=mysql;User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
                 string query = "SHOW DATABASES LIKE '" + nombreBDUsuarios + "'";
 
                 using (MySqlConnection con = new MySqlConnection(conexion))
