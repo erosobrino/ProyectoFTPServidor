@@ -19,6 +19,7 @@ namespace ProyectoFTPServidor
         string ruta;
         string rutaConfig = Environment.GetEnvironmentVariable("homedrive") + "\\" + Environment.GetEnvironmentVariable("homepath") + "\\configServidorFTP.txt";
         List<string> rutasFicheros = new List<string>();
+        List<string> rutasDirectorios = new List<string>();
 
         static void Main(string[] args)
         {
@@ -34,15 +35,16 @@ namespace ProyectoFTPServidor
             Console.WriteLine("Puerto Servidor: " + p.puertoServer);
             Console.WriteLine("Ruta: " + p.ruta + "\n");
 
-            if (p.compruebaBD())
-                Console.WriteLine("Conexion correcta con la base de datos\n");
-            else
-                Console.WriteLine("No se ha podido establecer conexion con la base de datos\n");
-
             p.cargaFicheros();
+            if (!p.compruebaBD())
+                Console.WriteLine("No se ha podido establecer conexion con la base de datos\n");
+            else
+            {
+                Console.WriteLine("Conexion correcta con la base de datos\n");
+                p.iniciaServidorArchivos();
 
-            Console.WriteLine(p.usuarioValido("admin", "admin"));
 
+            }
             Console.ReadLine();
         }
 
@@ -61,7 +63,7 @@ namespace ProyectoFTPServidor
                     Socket sCliente = s.Accept();
                     Thread hilo = new Thread(() => hiloCliente(sCliente));
                     hilo.IsBackground = true;
-                    hilo.Start(sCliente);
+                    hilo.Start();
                 }
             }
             catch (SocketException)
@@ -74,6 +76,118 @@ namespace ProyectoFTPServidor
         private void hiloCliente(Socket sCliente)
         {
 
+            NetworkStream ns;
+            StreamReader sr;
+            StreamWriter sw = null;
+            bool stop = false;
+            bool valido = false;
+            string msg = "";
+            string rutaActual = ruta;
+            try
+            {
+                using (ns = new NetworkStream(sCliente))
+                {
+                    using (sr = new StreamReader(ns))
+                    {
+                        using (sw = new StreamWriter(ns))
+                        {
+                            sw.WriteLine("Conectado");
+                            sw.Flush();
+                            string userPass = sr.ReadLine(); //user=admin pass=admin
+                            if (userPass != null && userPass != "")
+                            {
+                                userPass = userPass.Trim();
+                                int longitud = userPass.IndexOf(' ') - userPass.IndexOf('=') - 1;
+                                if (longitud > 0)
+                                {
+                                    string usuario = userPass.Substring(userPass.IndexOf('=') + 1, longitud);
+                                    string contraseña = userPass.Substring(userPass.LastIndexOf('=') + 1);
+                                    valido = usuarioValido(usuario, contraseña);
+                                    if (!valido)
+                                    {
+                                        sw.WriteLine("invalido");
+                                        sw.Flush();
+                                    }
+                                    else
+                                    {
+                                        sw.WriteLine("valido");
+                                        sw.Flush();
+                                        while (msg != null && !stop)
+                                        {
+                                            msg = sr.ReadLine();
+                                            if (msg != null)
+                                            {
+                                                string[] msgSeparado = msg.Split(' ');
+                                                switch (msgSeparado[0].ToUpper())
+                                                {
+                                                    case "LISTADO":
+                                                        sw.WriteLine(carpetaActual(rutaActual));
+                                                        sw.Flush();
+                                                        break;
+                                                    case "DIRECTORIO":
+                                                        if (rutasDirectorios.Contains((rutaActual + "\\" + msgSeparado[1].Trim()).ToLower()))
+                                                        {
+                                                            rutaActual += "\\" + msgSeparado[1].Trim();
+                                                            sw.WriteLine("Valido");
+                                                        }
+                                                        else
+                                                            sw.WriteLine("Invalido");
+                                                        sw.Flush();
+                                                        break;
+                                                    case "FICHERO":
+                                                        if (rutasFicheros.Contains((rutaActual + "\\" + msgSeparado[1].Trim()).ToLower()))
+                                                        {
+                                                            
+                                                        }
+
+                                                        break;
+                                                    case "CERRAR":
+                                                        stop = true;
+                                                        break;
+                                                    case "ATRAS":
+                                                        if (rutaActual != ruta)
+                                                        {
+                                                            rutaActual=rutaActual.Substring(0, rutaActual.LastIndexOf("\\"));
+                                                        }
+                                                        break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    sw.WriteLine("invalido");
+                                    sw.Flush();
+                                }
+                            }
+                        }
+                    }
+                    sCliente.Close();
+                }
+            }
+            catch (IOException)
+            {
+                Console.WriteLine("Usuario desconectado");
+                sCliente.Close();
+            }
+        }
+
+        private string carpetaActual(string ruta)
+        {
+            String nombres = "";
+            DirectoryInfo directoryInfo = new DirectoryInfo(ruta);
+            DirectoryInfo[] directorios = directoryInfo.GetDirectories();
+            foreach (DirectoryInfo directorio in directorios)
+            {
+                nombres += "D:" + directorio.Name + Environment.NewLine;
+            }
+            FileInfo[] fileInfos = directoryInfo.GetFiles();
+            foreach (FileInfo fileInfo in fileInfos)
+            {
+                nombres += "F:" + fileInfo.Name + Environment.NewLine;
+            }
+            return nombres;
         }
 
         private void cargaFicheros()
@@ -107,16 +221,20 @@ namespace ProyectoFTPServidor
                         Console.Write("\t");
                     }
                     Console.WriteLine(fileInfo.Name);
-                    rutasFicheros.Add(fileInfo.FullName);
+                    rutasFicheros.Add(fileInfo.FullName.ToLower());
                 }
                 Console.WriteLine();
                 DirectoryInfo[] directorios = directoryInfo.GetDirectories();
                 foreach (DirectoryInfo directorio in directorios)
                 {
+                    rutasDirectorios.Add(directorio.FullName.ToLower());
                     compruebaDirectorios(directorio.FullName, indice);
                 }
             }
-            catch { }
+            catch
+            {
+                Console.WriteLine("Ruta no valida");
+            }
         }
 
         private void leeConfiguracion()
@@ -161,7 +279,7 @@ namespace ProyectoFTPServidor
                                     }
                                     catch (Exception)
                                     {
-                                        Console.WriteLine("El puerto para el servidor debe ser un numero entre "+ IPEndPoint.MinPort+" y "+IPEndPoint.MaxPort);
+                                        Console.WriteLine("El puerto para el servidor debe ser un numero entre " + IPEndPoint.MinPort + " y " + IPEndPoint.MaxPort);
                                     }
                                     break;
                                 default:
@@ -204,7 +322,7 @@ namespace ProyectoFTPServidor
             try
             {
                 //Comprueba que existe la base de datos y sino la crea con el usuario admin por defecto
-                string conexion = "Server=" + ip + ";port="+puertoBD+";Database=mysql;User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
+                string conexion = "Server=" + ip + ";port=" + puertoBD + ";Database=mysql;User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
                 string query = "SHOW DATABASES LIKE '" + nombreBDUsuarios + "'";
 
                 using (MySqlConnection con = new MySqlConnection(conexion))
