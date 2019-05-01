@@ -1,5 +1,6 @@
 # Proyecto Servidor FTP
 El proyecto consiste en un servidor FTP al cual nos podremos conectar mediante una aplicación para Windows y Android, estas estarán desarrolladas en Xamarin y estará pronto disponibles.
+Enlace del cliente: https://github.com/erosobrino/ClienteFTP
 
 
 ### Instalación 
@@ -21,3 +22,4 @@ Una vez hecho esto, puedes añadir nuevos usuarios as servidor mediante un gesto
 19/04/2019 Metodos para leer configuracion, conectar bd o crear para tabla de usuarios, comprobacion de usuario valido y carga de ficheros<br>
 23/04/2019 Metodo para lanzar hilos para conexiones, añadir nuevo elemento al fichero de configuracion y correccion en conexion a bd<br>
 27/04/2019 Funcion hiloCLiente, comprueba usuario, muestra ficheros de la ruta de ese cliente, permite cambiar de directorio y salir<br>
+01/05/2019 Crear proyecto Xamarin para el cliente y añadir pantalla principal
