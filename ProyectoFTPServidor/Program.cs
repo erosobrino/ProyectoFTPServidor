@@ -137,9 +137,30 @@ namespace ProyectoFTPServidor
                                                     case "FICHERO":
                                                         if (rutasFicheros.Contains((rutaActual + "\\" + msgSeparado[1].Trim()).ToLower()))
                                                         {
-                                                            
+                                                            try
+                                                            {
+                                                                long ti = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                                                                byte[] bytes = File.ReadAllBytes((rutaActual + "\\" + msgSeparado[1].Trim()).ToLower());
+                                                                foreach (byte b in bytes)
+                                                                {
+                                                                    sw.Write(b);
+                                                                    Console.Write(b);
+                                                                }
+                                                                sw.Flush();
+                                                                Console.WriteLine(System.DateTimeOffset.Now.ToUnixTimeMilliseconds() - ti);
+                                                            }
+                                                            catch
+                                                            {
+                                                                Console.WriteLine("Error al enviar un fichero");
+                                                                sw.WriteLine("Error al enviar el fichero");
+                                                                sw.Flush();
+                                                            }
                                                         }
-
+                                                        else
+                                                        {
+                                                            sw.WriteLine("No existe el fichero");
+                                                            sw.Flush();
+                                                        }
                                                         break;
                                                     case "CERRAR":
                                                         stop = true;
@@ -147,7 +168,12 @@ namespace ProyectoFTPServidor
                                                     case "ATRAS":
                                                         if (rutaActual != ruta)
                                                         {
-                                                            rutaActual=rutaActual.Substring(0, rutaActual.LastIndexOf("\\"));
+                                                            rutaActual = rutaActual.Substring(0, rutaActual.LastIndexOf("\\"));
+                                                        }
+                                                        else
+                                                        {
+                                                            sw.WriteLine("Ya estas en la raiz");
+                                                            sw.Flush();
                                                         }
                                                         break;
                                                 }
