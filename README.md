@@ -22,4 +22,5 @@ Una vez hecho esto, puedes añadir nuevos usuarios as servidor mediante un gesto
 19/04/2019 Metodos para leer configuracion, conectar bd o crear para tabla de usuarios, comprobacion de usuario valido y carga de ficheros<br>
 23/04/2019 Metodo para lanzar hilos para conexiones, añadir nuevo elemento al fichero de configuracion y correccion en conexion a bd<br>
 27/04/2019 Funcion hiloCLiente, comprueba usuario, muestra ficheros de la ruta de ese cliente, permite cambiar de directorio y salir<br>
-01/05/2019 Crear proyecto Xamarin para el cliente y añadir pantalla principal
+01/05/2019 Crear proyecto Xamarin para el cliente y añadir pantalla principal en ClienteFTP<br>
+04/05/2019 Pantalla de inicio, pantalla de listado con botones y visualizacion de listado con imagenes en ClienteFTP<br>
