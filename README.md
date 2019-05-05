@@ -24,3 +24,4 @@ Una vez hecho esto, puedes añadir nuevos usuarios as servidor mediante un gesto
 27/04/2019 Funcion hiloCLiente, comprueba usuario, muestra ficheros de la ruta de ese cliente, permite cambiar de directorio y salir<br>
 01/05/2019 Crear proyecto Xamarin para el cliente y añadir pantalla principal en ClienteFTP<br>
 04/05/2019 Pantalla de inicio, pantalla de listado con botones y visualizacion de listado con imagenes en ClienteFTP<br>
+05/05/2019 Modificar layout de pagina inicio por grid, añadir permiso red android y paso de pantalla al conectar, añadir preferencias para guardar datos de inicio y pasar de campo con enter<br>
