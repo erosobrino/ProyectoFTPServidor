@@ -42,10 +42,7 @@ namespace ProyectoFTPServidor
             {
                 Console.WriteLine("Conexion correcta con la base de datos\n");
                 p.iniciaServidorArchivos();
-
-
             }
-            Console.ReadLine();
         }
 
         public void iniciaServidorArchivos()
@@ -70,7 +67,6 @@ namespace ProyectoFTPServidor
             {
                 Console.WriteLine("El puerto esta ocupado");
             }
-            Console.ReadKey();
         }
 
         private void hiloCliente(Socket sCliente)
@@ -162,8 +158,11 @@ namespace ProyectoFTPServidor
                                                             sw.Flush();
                                                         }
                                                         break;
-                                                    case "CERRAR":
+                                                    case "SALIR":
                                                         stop = true;
+                                                        break;
+                                                    case "CERRAR":
+                                                        Environment.Exit(1);
                                                         break;
                                                     case "ATRAS":
                                                         if (rutaActual != ruta)
@@ -173,6 +172,19 @@ namespace ProyectoFTPServidor
                                                         else
                                                         {
                                                             sw.WriteLine("Ya estas en la raiz");
+                                                            sw.Flush();
+                                                        }
+                                                        break;
+                                                    case "USUARIO":
+                                                        if (msgSeparado.Length == 3)
+                                                        {
+                                                            bool modificado = cambiaContraseñaBD(msgSeparado[1], msgSeparado[2]);
+                                                            if (modificado)
+                                                            {
+                                                                sw.WriteLine("valido");
+                                                            }
+                                                            else
+                                                                sw.WriteLine("invalido");
                                                             sw.Flush();
                                                         }
                                                         break;
@@ -199,6 +211,11 @@ namespace ProyectoFTPServidor
             }
         }
 
+        private bool cambiaContraseñaBD(string nombre, string contraseña)
+        {
+            throw new NotImplementedException();
+        }
+
         private string carpetaActual(string ruta)
         {
             String nombres = "";
@@ -206,12 +223,12 @@ namespace ProyectoFTPServidor
             DirectoryInfo[] directorios = directoryInfo.GetDirectories();
             foreach (DirectoryInfo directorio in directorios)
             {
-                nombres += "D:" + directorio.Name + Environment.NewLine;
+                nombres += "D:" + directorio.Name + '?';
             }
             FileInfo[] fileInfos = directoryInfo.GetFiles();
             foreach (FileInfo fileInfo in fileInfos)
             {
-                nombres += "F:" + fileInfo.Name + Environment.NewLine;
+                nombres += "F:" + fileInfo.Name + '?';
             }
             return nombres;
         }
