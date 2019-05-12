@@ -25,3 +25,4 @@ Una vez hecho esto, puedes añadir nuevos usuarios as servidor mediante un gesto
 01/05/2019 Crear proyecto Xamarin para el cliente y añadir pantalla principal en ClienteFTP<br>
 04/05/2019 Pantalla de inicio, pantalla de listado con botones y visualizacion de listado con imagenes en ClienteFTP<br>
 05/05/2019 Modificar layout de pagina inicio por grid, añadir permiso red android y paso de pantalla al conectar, añadir preferencias para guardar datos de inicio y pasar de campo con enter<br>
+11/05/2019 Visualizar ficheros y carpetas en la lista, cambiar de carpeta, menu opciones iniciado, funcion para crear ficheros en windows y android(sin acabar) <br>
