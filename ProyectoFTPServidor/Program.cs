@@ -188,6 +188,19 @@ namespace ProyectoFTPServidor
                                                             sw.Flush();
                                                         }
                                                         break;
+                                                    case "ADMIN":
+                                                        if (msgSeparado.Length == 2)
+                                                        {
+                                                            bool esAdmin = compruebaAdmin(msgSeparado[1]);
+                                                            if (esAdmin)
+                                                            {
+                                                                sw.WriteLine("valido");
+                                                            }
+                                                            else
+                                                                sw.WriteLine("invalido");
+                                                            sw.Flush();
+                                                        }
+                                                        break;
                                                 }
                                             }
                                         }
@@ -211,9 +224,53 @@ namespace ProyectoFTPServidor
             }
         }
 
+        private bool compruebaAdmin(string nombre)
+        {
+            try
+            {
+                string conexionBDUsuarios = "Server=" + ip + ";port=" + puertoBD + "; Database=" + nombreBDUsuarios + ";User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
+                string queryComprueba = "select * from usuarios where nombre='" + nombre + "' and esAdmin=true";
+                using (MySqlConnection conBDUsuarios = new MySqlConnection(conexionBDUsuarios))
+                {
+                    conBDUsuarios.Open();
+                    MySqlCommand commandDatabase = new MySqlCommand(queryComprueba, conBDUsuarios);
+                    MySqlDataReader reader = commandDatabase.ExecuteReader();
+                    if (reader.HasRows)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private bool cambiaContraseñaBD(string nombre, string contraseña)
         {
-            throw new NotImplementedException();
+            try
+            {
+                string conexionBDUsuarios = "Server=" + ip + ";port=" + puertoBD + "; Database=" + nombreBDUsuarios + ";User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
+                string query = "UPDATE usuarios SET contraseña='" + contraseña + "' WHERE nombre='" + nombre + "'";
+                string queryComprueba = "select contraseña from usuarios where nombre='" + nombre + "' and contraseña='" + contraseña + "'";
+                using (MySqlConnection conBDUsuarios = new MySqlConnection(conexionBDUsuarios))
+                {
+                    conBDUsuarios.Open();
+                    MySqlCommand commandDatabase = new MySqlCommand(query, conBDUsuarios);
+                    commandDatabase.ExecuteNonQuery();
+                    commandDatabase = new MySqlCommand(queryComprueba, conBDUsuarios);
+                    MySqlDataReader reader = commandDatabase.ExecuteReader();
+                    if (reader.HasRows)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private string carpetaActual(string ruta)
@@ -381,9 +438,10 @@ namespace ProyectoFTPServidor
                         Console.WriteLine("No hay bd");
                         string creaBD = "CREATE DATABASE " + nombreBDUsuarios + " CHARACTER SET UTF8 COLLATE UTF8_SPANISH_CI;";
                         string creaTabla = "CREATE TABLE usuarios (id INT AUTO_INCREMENT PRIMARY KEY," +
-                            "nombre CHAR(20) NOT NULL," +
-                            "contraseña varchar(50));";
-                        string añadeAdmin = "insert into usuarios (nombre, contraseña) VALUES ('admin', 'admin');";
+                            "nombre CHAR(20) NOT NULL unique," +
+                            "contraseña varchar(50) NOT NULL," +
+                            " esAdmin BOOL DEFAULT FALSE);";
+                        string añadeAdmin = "insert into usuarios (nombre, contraseña, esAdmin) VALUES ('admin', 'admin',true);";
 
                         commandDatabase = new MySqlCommand(creaBD, con);
                         commandDatabase.ExecuteNonQuery();
@@ -397,7 +455,7 @@ namespace ProyectoFTPServidor
                             commandDatabase = new MySqlCommand(añadeAdmin, conBDUsuarios);
                             commandDatabase.ExecuteNonQuery();
                         }
-                        Console.WriteLine("addfsdf");
+                        Console.WriteLine("Se ha creado la base de datos " + nombreBDUsuarios + " para almacenar los usuarios");
                     }
                 }
                 return true;
@@ -413,7 +471,7 @@ namespace ProyectoFTPServidor
             try
             {
                 string query = "SELECT * FROM usuarios WHERE nombre = '" + nombre + "' AND contraseña = '" + contraseña + "'";
-                string conexionBDUsuarios = "Server=" + ip + ";Database=" + nombreBDUsuarios + ";User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
+                string conexionBDUsuarios = "Server=" + ip + ";port=" + puertoBD + "; Database=" + nombreBDUsuarios + ";User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
                 using (MySqlConnection conBDUsuarios = new MySqlConnection(conexionBDUsuarios))
                 {
                     conBDUsuarios.Open();
