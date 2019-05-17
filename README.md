@@ -28,3 +28,4 @@ Una vez hecho esto, puedes añadir nuevos usuarios as servidor mediante un gesto
 11/05/2019 Visualizar ficheros y carpetas en la lista, cambiar de carpeta, menu opciones iniciado, funcion para crear ficheros en windows y android(sin acabar) <br>
 12/05/2019 Añadir Opcion apagar server y para cambiar contraseña (falta metodo) Server<br>
 12/05/2019 Añadir pantalla de configuracion de usuario para cambiar contraseña, pagina de informacion(sin finalizar) y opcion de apagar server si somos admin. Cliente<br>
+17/05/2019 Modificacion tabla, funcion de comprobar admin y cambio de contraseña de un usuario<br>
