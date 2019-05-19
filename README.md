@@ -31,3 +31,4 @@ Una vez hecho esto, puedes añadir nuevos usuarios as servidor mediante un gesto
 17/05/2019 Modificacion tabla, funcion de comprobar admin y cambio de contraseña de un usuario<br>
 18/05/2019 Envio de ficheros en android funcional y pequeños cambios de diseño<br>
 19/05/2019 Comprobaciones espacio, poder reconectarse, notificaciones, icono, pruebas archivos, funciona en android pero en windows no<br>
+20/05/2019 Probado el cliente desde otro equipo funciona el envio de archivos
