@@ -22,6 +22,13 @@ namespace ProyectoFTPServidor
         List<string> rutasFicheros = new List<string>();
         List<string> rutasDirectorios = new List<string>();
 
+        /// <summary>
+        /// Comprueba la configuración y la crea en caso de que no exista,
+        /// se conecta a la base de datos y lanza el inicio de los hilos.
+        /// 
+        /// Por pantalla se  muestra informacion del servidor.
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             Program p = new Program();
@@ -65,6 +72,9 @@ namespace ProyectoFTPServidor
                 Console.WriteLine("La configuracion no es valida, los puertos deben ser diferentes");
         }
 
+        /// <summary>
+        /// Intenta crear una entrada por red a traves del puerto de configuracion y por cada conexion crea un hilo
+        /// </summary>
         public void iniciaServidorArchivos()
         {
             try
@@ -89,6 +99,10 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// En esta funcion se establece el protocolo de comunicación con el cliente, el cual dispondrá de distintas opciones.
+        /// </summary>
+        /// <param name="sCliente">El socket del cliente que se conecta</param>
         private void hiloCliente(Socket sCliente)
         {
             string ipCliente = ((IPEndPoint)(sCliente.RemoteEndPoint)).Address.ToString();
@@ -164,23 +178,21 @@ namespace ProyectoFTPServidor
                                                                     sArchivo.Close();
                                                                 }
 
-                                                                sw.Write("enviado");
-                                                                sw.Flush();
+                                                                //sw.Write("enviado");
                                                                 Console.WriteLine(System.DateTimeOffset.Now.ToUnixTimeMilliseconds() - ti);
                                                                 //195829milis 3.2 min 546mb
                                                             }
                                                             catch
                                                             {
                                                                 Console.WriteLine("Error al enviar un fichero");
-                                                                sw.WriteLine("Error al enviar el fichero");
-                                                                sw.Flush();
+                                                                //sw.WriteLine("Error al enviar el fichero");
                                                             }
                                                         }
                                                         else
                                                         {
-                                                            sw.WriteLine("No existe el fichero");
-                                                            sw.Flush();
+                                                            //sw.WriteLine("No existe el fichero");
                                                         }
+                                                        //sw.Flush();
                                                         break;
                                                     case "SALIR":
                                                         stop = true;
@@ -273,6 +285,15 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// Inserta o añade a un usuario y devuelve true o false si se ha realizado
+        /// la accion correctamente, si el id es -1 se inserta
+        /// </summary>
+        /// <param name="id">El id</param>
+        /// <param name="nombre">El nombre de usuario</param>
+        /// <param name="contraseña">La contraseña del usuario</param>
+        /// <param name="admin">Si es admin</param>
+        /// <returns>True si se modifica, false si no</returns>
         private bool creaOModifica(int id, string nombre, string contraseña, bool admin)
         {
             try
@@ -307,6 +328,10 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// Se conecta a la base de datos y devuelve los datos de los usuarios (id, nombre, contraseña,esAdmin)
+        /// </summary>
+        /// <returns>Los datos separados por | y cada usuario por #</returns>
         private string listaUsuarios()
         {
             string cadena = "";
@@ -333,6 +358,11 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// Comrpueba si un usuario es admin
+        /// </summary>
+        /// <param name="nombre">El nombre a comprobar</param>
+        /// <returns>True si es admin, false si no lo es</returns>
         private bool compruebaAdmin(string nombre)
         {
             try
@@ -356,6 +386,12 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// Cambia la conraseña de un usuario
+        /// </summary>
+        /// <param name="nombre">El nombre de usuario al que se le cambia la contraseña</param>
+        /// <param name="contraseña">La nueva contraseña</param>
+        /// <returns>True si se cambia, false si no</returns>
         private bool cambiaContraseñaBD(string nombre, string contraseña)
         {
             try
@@ -382,6 +418,11 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// Deveulve los nombres y el tamaño de cada fichero  y el nombre de las carpeta D(directorio) F(fichero) separados por ?
+        /// </summary>
+        /// <param name="ruta"></param>
+        /// <returns>Los nombres de los ficheros y carpetas con indicativos para diferenciarlos</returns>
         private string carpetaActual(string ruta)
         {
             String nombres = "";
@@ -399,6 +440,9 @@ namespace ProyectoFTPServidor
             return nombres;
         }
 
+        /// <summary>
+        /// Llama a la funcion compruebaDirectorios con el indice 0 si existe la ruta actual
+        /// </summary>
         private void cargaFicheros()
         {
             if (Directory.Exists(ruta))
@@ -411,6 +455,11 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// Recorre todos los ficheros y los añade a una lista de string, en caso de ser carpetas se llama de forma recursiva 
+        /// </summary>
+        /// <param name="ruta">La ruta a comprobar</param>
+        /// <param name="indice">El indice de profundidad de la carpeta</param>
         private void compruebaDirectorios(string ruta, int indice)
         {
             try
@@ -446,6 +495,9 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// Lee la configuracion de rutaConfig y si no existe la crea con datos por defecto
+        /// </summary>
         private void leeConfiguracion()
         {
             if (File.Exists(rutaConfig))
@@ -541,6 +593,10 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// Comprueba si existe la base de datos y sino la crea con un usuario por defecto
+        /// </summary>
+        /// <returns></returns>
         private bool compruebaBD()
         {
             try
@@ -590,6 +646,12 @@ namespace ProyectoFTPServidor
             }
         }
 
+        /// <summary>
+        /// Comprueba si un usuario pertenece a la base de datos
+        /// </summary>
+        /// <param name="nombre">El nombre a comprobar</param>
+        /// <param name="contraseña">La contraseña a comprobar</param>
+        /// <returns>True si son validos, false si no lo son</returns>
         private bool usuarioValido(string nombre, string contraseña)
         {
             try
