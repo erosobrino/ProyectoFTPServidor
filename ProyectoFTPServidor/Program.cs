@@ -13,6 +13,7 @@ namespace ProyectoFTPServidor
         IPAddress ip;
         string puertoBD;
         int puertoServer;
+        int puertoArchivos;
         string usuarioBD;
         string contraseñaBD;
         string nombreBDUsuarios;
@@ -27,22 +28,41 @@ namespace ProyectoFTPServidor
             p.leeConfiguracion();
 
             Console.WriteLine("Puedes modificar el archivo de configuracion en " + p.rutaConfig);
-            Console.WriteLine("IP: " + p.ip);
+            Console.Write("IP: " + p.ip + " ");
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (IPAddress ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+
+                    Console.Write(ip.ToString() + " ");
+                }
+            }
+            Console.WriteLine();
             Console.WriteLine("Usuario: " + p.usuarioBD);
             Console.WriteLine("Contraseña: " + p.contraseñaBD);
             Console.WriteLine("Base de datos: " + p.nombreBDUsuarios);
             Console.WriteLine("Puerto BD: " + p.puertoBD);
             Console.WriteLine("Puerto Servidor: " + p.puertoServer);
+            Console.WriteLine("Puerto Archivos: " + p.puertoArchivos);
             Console.WriteLine("Ruta: " + p.ruta + "\n");
 
-            p.cargaFicheros();
-            if (!p.compruebaBD())
-                Console.WriteLine("No se ha podido establecer conexion con la base de datos\n");
-            else
+            if (p.puertoArchivos != Convert.ToInt32(p.puertoBD) && p.puertoServer != Convert.ToInt32(p.puertoBD) && p.puertoArchivos != p.puertoServer)
             {
-                Console.WriteLine("Conexion correcta con la base de datos\n");
-                p.iniciaServidorArchivos();
+                p.cargaFicheros();
+                if (!p.compruebaBD())
+                {
+                    Console.WriteLine("No se ha podido establecer conexion con la base de datos\n");
+                    Console.ReadLine();
+                }
+                else
+                {
+                    Console.WriteLine("Conexion correcta con la base de datos\n");
+                    p.iniciaServidorArchivos();
+                }
             }
+            else
+                Console.WriteLine("La configuracion no es valida, los puertos deben ser diferentes");
         }
 
         public void iniciaServidorArchivos()
@@ -71,7 +91,7 @@ namespace ProyectoFTPServidor
 
         private void hiloCliente(Socket sCliente)
         {
-
+            string ipCliente = ((IPEndPoint)(sCliente.RemoteEndPoint)).Address.ToString();
             NetworkStream ns;
             StreamReader sr;
             StreamWriter sw = null;
@@ -136,14 +156,18 @@ namespace ProyectoFTPServidor
                                                             try
                                                             {
                                                                 long ti = System.DateTimeOffset.Now.ToUnixTimeMilliseconds();
-                                                                byte[] bytes = File.ReadAllBytes((rutaActual + "\\" + msgSeparado[1].Trim()).ToLower());
-                                                                foreach (byte b in bytes)
+
+                                                                using (Socket sArchivo = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                                                                 {
-                                                                    sw.Write(b);
-                                                                    Console.Write(b);
+                                                                    sArchivo.Connect(new IPEndPoint(IPAddress.Parse(ipCliente), puertoArchivos));
+                                                                    sArchivo.SendFile((rutaActual + "\\" + msgSeparado[1].Trim()).ToLower());
+                                                                    sArchivo.Close();
                                                                 }
+
+                                                                sw.Write("enviado");
                                                                 sw.Flush();
                                                                 Console.WriteLine(System.DateTimeOffset.Now.ToUnixTimeMilliseconds() - ti);
+                                                                //195829milis 3.2 min 546mb
                                                             }
                                                             catch
                                                             {
@@ -201,6 +225,31 @@ namespace ProyectoFTPServidor
                                                             sw.Flush();
                                                         }
                                                         break;
+                                                    case "LISTAUSUARIOS":
+                                                        sw.WriteLine(listaUsuarios());
+                                                        sw.Flush();
+                                                        break;
+                                                    case "MODIFICAR":
+                                                        if (msgSeparado.Length == 5)
+                                                        {
+                                                            try
+                                                            {
+                                                                bool admin = false;
+                                                                Boolean.TryParse(msgSeparado[4], out admin);
+                                                                if (creaOModifica(Convert.ToInt32(msgSeparado[1]), msgSeparado[2], msgSeparado[3], admin))
+                                                                    sw.WriteLine("valido");
+                                                                else
+                                                                    sw.WriteLine("error");
+                                                            }
+                                                            catch
+                                                            {
+                                                                sw.WriteLine("error");
+                                                            }
+                                                        }
+                                                        else
+                                                            sw.WriteLine("invalido");
+                                                        sw.Flush();
+                                                        break;
                                                 }
                                             }
                                         }
@@ -221,6 +270,66 @@ namespace ProyectoFTPServidor
             {
                 Console.WriteLine("Usuario desconectado");
                 sCliente.Close();
+            }
+        }
+
+        private bool creaOModifica(int id, string nombre, string contraseña, bool admin)
+        {
+            try
+            {
+                string conexionBDUsuarios = "Server=" + ip + ";port=" + puertoBD + "; Database=" + nombreBDUsuarios + ";User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
+                string insertar = "insert into usuarios(nombre, contraseña, esAdmin) VALUES('" + nombre + "', '" + contraseña + "', " + admin + ")";
+                string modificar = "UPDATE usuarios SET nombre = '" + nombre + "', contraseña = '" + contraseña + "', esAdmin = " + admin + " WHERE id = " + id;
+                string comprobacion = "select * from usuarios where nombre='" + nombre + "' and contraseña='" + contraseña + "' and esAdmin=" + admin;
+
+                string query = "";
+                if (id == -1)
+                    query = insertar;
+                else
+                    query = modificar;
+
+                using (MySqlConnection conBDUsuarios = new MySqlConnection(conexionBDUsuarios))
+                {
+                    conBDUsuarios.Open();
+                    MySqlCommand commandDatabase = new MySqlCommand(query, conBDUsuarios);
+                    commandDatabase.ExecuteNonQuery();
+                    commandDatabase = new MySqlCommand(comprobacion, conBDUsuarios);
+                    MySqlDataReader reader = commandDatabase.ExecuteReader();
+                    if (reader.HasRows)
+                        return true;
+                    else
+                        return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private string listaUsuarios()
+        {
+            string cadena = "";
+            try
+            {
+                string conexionBDUsuarios = "Server=" + ip + ";port=" + puertoBD + "; Database=" + nombreBDUsuarios + ";User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
+                string query = "select * from usuarios";
+                using (MySqlConnection conBDUsuarios = new MySqlConnection(conexionBDUsuarios))
+                {
+                    conBDUsuarios.Open();
+                    MySqlCommand commandDatabase = new MySqlCommand(query, conBDUsuarios);
+                    MySqlDataReader reader = commandDatabase.ExecuteReader();
+                    if (reader.HasRows)
+                        while (reader.Read())
+                        {
+                            cadena += reader.GetInt32("id") + "|" + reader.GetString("nombre") + '|' + reader.GetString(2) + '|' + reader.GetBoolean("esAdmin") + '#';
+                        }
+                }
+                return cadena;
+            }
+            catch
+            {
+                return "";
             }
         }
 
@@ -285,7 +394,7 @@ namespace ProyectoFTPServidor
             FileInfo[] fileInfos = directoryInfo.GetFiles();
             foreach (FileInfo fileInfo in fileInfos)
             {
-                nombres += "F:" + fileInfo.Name + '?';
+                nombres += "F:" + fileInfo.Name + '#' + fileInfo.Length + '?';
             }
             return nombres;
         }
@@ -382,6 +491,20 @@ namespace ProyectoFTPServidor
                                         Console.WriteLine("El puerto para el servidor debe ser un numero entre " + IPEndPoint.MinPort + " y " + IPEndPoint.MaxPort);
                                     }
                                     break;
+                                case "puertoarchivos":
+                                    try
+                                    {
+                                        puertoArchivos = Convert.ToInt32(lineaActual.Substring(lineaActual.IndexOf('=') + 1));
+                                        if (puertoArchivos < IPEndPoint.MinPort || puertoArchivos > IPEndPoint.MaxPort)
+                                        {
+                                            throw new Exception();
+                                        }
+                                    }
+                                    catch (Exception)
+                                    {
+                                        Console.WriteLine("El puerto de archivos debe ser un numero entre " + IPEndPoint.MinPort + " y " + IPEndPoint.MaxPort);
+                                    }
+                                    break;
                                 default:
                                     break;
                             }
@@ -407,6 +530,7 @@ namespace ProyectoFTPServidor
                         sw.WriteLine("puertoBD=3306");
                         sw.WriteLine("ruta=");
                         sw.WriteLine("puertoServer=31416");
+                        sw.WriteLine("puertoArchivos=31417");
                     }
                     leeConfiguracion();
                 }
