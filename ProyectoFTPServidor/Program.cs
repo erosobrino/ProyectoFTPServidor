@@ -262,6 +262,25 @@ namespace ProyectoFTPServidor
                                                             sw.WriteLine("invalido");
                                                         sw.Flush();
                                                         break;
+                                                    case "ELIMINAR":
+                                                        if (msgSeparado.Length == 2)
+                                                        {
+                                                            try
+                                                            {
+                                                                if (eliminaUsuario(Convert.ToInt32(msgSeparado[1])))
+                                                                    sw.WriteLine("valido");
+                                                                else
+                                                                    sw.WriteLine("error");
+                                                            }
+                                                            catch
+                                                            {
+                                                                sw.WriteLine("error");
+                                                            }
+                                                        }
+                                                        else
+                                                            sw.WriteLine("invalido");
+                                                        sw.Flush();
+                                                        break;
                                                 }
                                             }
                                         }
@@ -282,6 +301,40 @@ namespace ProyectoFTPServidor
             {
                 Console.WriteLine("Usuario desconectado");
                 sCliente.Close();
+            }
+        }
+
+        /// <summary>
+        /// Comprueba si existe un usuario y lo elimina
+        /// </summary>
+        /// <param name="id">El id a eliminar</param>
+        /// <returns>True si se elimina, false si no</returns>
+        private bool eliminaUsuario(int id)
+        {
+            try
+            {
+                string conexionBDUsuarios = "Server=" + ip + ";port=" + puertoBD + "; Database=" + nombreBDUsuarios + ";User ID=" + usuarioBD + ";Password=" + contraseñaBD + ";Pooling=false;";
+                string comprobacion = "select * from usuarios where id=" + id;
+                string elimina = "DELETE FROM usuarios WHERE id=" + id;
+
+                using (MySqlConnection conBDUsuarios = new MySqlConnection(conexionBDUsuarios))
+                {
+                    conBDUsuarios.Open();
+                    MySqlCommand commandDatabase = new MySqlCommand(comprobacion, conBDUsuarios);
+                    MySqlDataReader reader = commandDatabase.ExecuteReader();
+                    if (reader.HasRows)
+                    {
+                        commandDatabase = new MySqlCommand(elimina, conBDUsuarios);
+                        commandDatabase.ExecuteNonQuery();
+                        return true;
+                    }
+                    else
+                        return false;
+                }
+            }
+            catch
+            {
+                return false;
             }
         }
 
