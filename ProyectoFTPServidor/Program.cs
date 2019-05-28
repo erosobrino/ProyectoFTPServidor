@@ -54,22 +54,60 @@ namespace ProyectoFTPServidor
             Console.WriteLine("Puerto Archivos: " + p.puertoArchivos);
             Console.WriteLine("Ruta: " + p.ruta + "\n");
 
-            if (p.puertoArchivos != Convert.ToInt32(p.puertoBD) && p.puertoServer != Convert.ToInt32(p.puertoBD) && p.puertoArchivos != p.puertoServer)
+            if (p.compruebaRuta(p.ruta))
             {
-                p.cargaFicheros();
-                if (!p.compruebaBD())
+                if (p.puertoArchivos != Convert.ToInt32(p.puertoBD) && p.puertoServer != Convert.ToInt32(p.puertoBD) && p.puertoArchivos != p.puertoServer)
                 {
-                    Console.WriteLine("No se ha podido establecer conexion con la base de datos\n");
-                    Console.ReadLine();
+                    p.cargaFicheros();
+                    if (!p.compruebaBD())
+                    {
+                        Console.WriteLine("No se ha podido establecer conexion con la base de datos\n");
+                        Console.ReadLine();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Conexion correcta con la base de datos\n");
+                        p.iniciaServidorArchivos();
+                    }
                 }
                 else
+                    Console.WriteLine("La configuracion no es valida, los puertos deben ser diferentes");
+            }
+            Console.ReadLine();
+        }
+
+        /// <summary>
+        /// Devuelve true o false si la tenemos permisos en la carpeta con la ruta indicada
+        /// </summary>
+        /// <param name="ruta">La ruta a validar</param>
+        /// <returns>True si es valida, false si no</returns>
+        public bool compruebaRuta(string ruta)
+        {
+            bool valido = false;
+            string nombreCarpetaPrueba = "saadvfd6235";
+            if (ruta != "")
+            {
+                DirectoryInfo directoryInfo = new DirectoryInfo(ruta);
+                if (directoryInfo.Exists)
                 {
-                    Console.WriteLine("Conexion correcta con la base de datos\n");
-                    p.iniciaServidorArchivos();
+                    try
+                    {
+                        directoryInfo.CreateSubdirectory(nombreCarpetaPrueba);
+                        directoryInfo = new DirectoryInfo(directoryInfo.FullName + "\\" + nombreCarpetaPrueba);
+                        directoryInfo.Delete();
+                        valido = true;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        Console.WriteLine("No tienes permisos en esta carpeta");
+                    }
                 }
+                else
+                    Console.WriteLine("La ruta no existe");
             }
             else
-                Console.WriteLine("La configuracion no es valida, los puertos deben ser diferentes");
+                Console.WriteLine("Introduce la ruta de la carpeta a compartir");
+            return valido;
         }
 
         /// <summary>
