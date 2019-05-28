@@ -203,7 +203,12 @@ namespace ProyectoFTPServidor
                                                         sw.Flush();
                                                         break;
                                                     case "FICHERO":
-                                                        if (rutasFicheros.Contains((rutaActual + "\\" + msgSeparado[1].Trim()).ToLower()))
+                                                        string nombreFichero = "";
+                                                        for (int i = 1; i < msgSeparado.Length; i++)
+                                                        {
+                                                            nombreFichero += msgSeparado[i] + " ";
+                                                        }
+                                                        if (rutasFicheros.Contains((rutaActual + "\\" + nombreFichero.Trim()).ToLower()))
                                                         {
                                                             try
                                                             {
@@ -212,7 +217,7 @@ namespace ProyectoFTPServidor
                                                                 using (Socket sArchivo = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
                                                                 {
                                                                     sArchivo.Connect(new IPEndPoint(IPAddress.Parse(ipCliente), puertoArchivos));
-                                                                    sArchivo.SendFile((rutaActual + "\\" + msgSeparado[1].Trim()).ToLower());
+                                                                    sArchivo.SendFile((rutaActual + "\\" + nombreFichero).ToLower());
                                                                     sArchivo.Close();
                                                                 }
 
