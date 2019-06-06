@@ -193,9 +193,14 @@ namespace ProyectoFTPServidor
                                                         sw.Flush();
                                                         break;
                                                     case "DIRECTORIO":
-                                                        if (rutasDirectorios.Contains((rutaActual + "\\" + msgSeparado[1].Trim()).ToLower()))
+                                                        string nombreDirectorio = "";
+                                                        for (int i = 1; i < msgSeparado.Length; i++)
                                                         {
-                                                            rutaActual += "\\" + msgSeparado[1].Trim();
+                                                            nombreDirectorio += msgSeparado[i] + " ";
+                                                        }
+                                                        if (rutasDirectorios.Contains((rutaActual + "\\" + nombreDirectorio.Trim()).ToLower()))
+                                                        {
+                                                            rutaActual += "\\" + nombreDirectorio.Trim();
                                                             sw.WriteLine("Valido");
                                                         }
                                                         else
@@ -624,6 +629,8 @@ namespace ProyectoFTPServidor
                                     break;
                                 case "ruta":
                                     ruta = lineaActual.Substring(lineaActual.IndexOf('=') + 1);
+                                    if (ruta.LastIndexOf('/') == ruta.Length - 1 || ruta.LastIndexOf('\\') == ruta.Length - 1)
+                                        ruta = ruta.Substring(0, ruta.Length - 1);
                                     break;
                                 case "puertoserver":
                                     try
